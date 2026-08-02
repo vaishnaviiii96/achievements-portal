@@ -1,43 +1,20 @@
 // backend/utils/mailer.js
 //
-// Sends OTP emails via Gmail SMTP using Nodemailer.
+// Sends OTP emails via Resend's HTTP API (port 443) instead of SMTP.
+// This avoids Render free-tier's outbound SMTP port blocking (25/465/587),
+// which was causing ENETUNREACH / connection timeouts with Nodemailer + Gmail.
 //
-// SETUP REQUIRED:
-// 1. npm install nodemailer
-// 2. In Gmail: enable 2-Step Verification, then create an "App Password"
-//    (Google Account → Security → 2-Step Verification → App passwords)
-// 3. Add to .env:
-//      GMAIL_USER=vaishnavi.tirupathi39@gmail.com
-//      GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx   (16-char app password, no spaces needed)
-//
-// Do NOT use your real Gmail password here — Google blocks it. App passwords only.
+// SETUP:
+// 1. npm install resend
+// 2. Sign up at https://resend.com, create an API key
+// 3. Add to .env / Render env vars: RESEND_API_KEY=your_key
 
-const nodemailer = require('nodemailer');
-
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  requireTLS: true,
-  family: 4,
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
-  },
-});
-
-// Verify connection on startup (logs a clear error early instead of failing silently later)
-transporter.verify((err) => {
-  if (err) {
-    console.error('❌ Mailer config error:', err.message);
-  } else {
-    console.log('✅ Mailer ready (Gmail SMTP)');
-  }
-});
+const { Resend } = require('resend');
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function sendOtpEmail(toEmail, otp, name) {
-  const mailOptions = {
-    from: `"GITAM Achievements Portal" <${process.env.GMAIL_USER}>`,
+  const { error } = await resend.emails.send({
+    from: 'GITAM Achievements Portal <onboarding@resend.dev>',
     to: toEmail,
     subject: 'Your Password Reset Code',
     html: `
@@ -52,9 +29,12 @@ async function sendOtpEmail(toEmail, otp, name) {
         <p style="color: #999; font-size: 12px; margin-top: 24px;">GITAM Achievements Portal</p>
       </div>
     `,
-  };
+  });
 
-  await transporter.sendMail(mailOptions);
+  if (error) {
+    console.error('❌ Resend email error:', error);
+    throw new Error('Failed to send OTP email.');
+  }
 }
 
 module.exports = { sendOtpEmail };
