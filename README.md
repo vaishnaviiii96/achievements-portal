@@ -8,7 +8,7 @@
 
 A full-stack web portal built for **GITAM Deemed to be University** to track, manage, and verify student and faculty achievements. Students upload certificates; faculty and admins review, approve, and export detailed reports.
 
-🔗 **Live Demo:** [your-app.vercel.app](https://your-app.vercel.app) *(update once deployed)*
+🔗 **Live Demo:** [achievements-portal-bice.vercel.app](https://achievements-portal-bice.vercel.app)
 
 ---
 
@@ -24,13 +24,14 @@ A full-stack web portal built for **GITAM Deemed to be University** to track, ma
 
 ```mermaid
 flowchart TD
-    A[Browser frontend] --> B[Express server]
+    A[Browser frontend - Vercel] --> B[Express server - Render]
     B --> C[Rate limiter]
     B --> D[JWT auth middleware]
     C --> E[Routes: auth, achievements, users, export]
     D --> E
     E --> F[(PostgreSQL - Neon)]
-    E --> G[Gmail SMTP - OTP emails]
+    E --> G[Resend API - OTP emails]
+    E --> H[Cloudinary - file storage]
 ```
 
 ---
@@ -64,6 +65,8 @@ flowchart TD
 - OTP-based password reset (bcrypt-hashed codes, 10-minute expiry, rate-limited)
 - XSS-safe HTML rendering (manual escaping on all user inputs)
 - Parameterised SQL queries (no SQL injection risk)
+- No shared or default credentials — bulk-imported users get unique random temp passwords
+- CORS restricted to the deployed frontend origin only
 
 ---
 
@@ -77,49 +80,51 @@ flowchart TD
 | **Backend** | Node.js 18+, Express 4.x |
 | **Database** | PostgreSQL (Neon serverless) |
 | **Auth** | JSON Web Tokens (`jsonwebtoken`), `bcrypt` |
-| **Email** | Nodemailer (Gmail SMTP) — OTP delivery |
-| **File Uploads** | Multer (JPEG, PNG, PDF, WebP — 10MB limit) |
+| **Email** | Resend HTTP API — OTP delivery |
+| **File Storage** | Cloudinary (via Multer) — certificates and proof photos |
 | **Excel Export** | ExcelJS (styled, branded headers) |
 | **PDF Reports** | PDFKit (GITAM-branded per-student reports) |
 | **Rate Limiting** | express-rate-limit |
+| **Hosting** | Render (backend), Vercel (frontend) |
 
 ---
 
-## 📐 Architecture
+## 📐 Project Structure
 
 ```
 achievements/
-├── index.html          # Student sign-up page
-├── login.html          # Role-based login (Student / Faculty / Admin)
-├── signup.html         # Account creation
-├── forgot-password.html # OTP-based password reset
-├── student.html        # Student dashboard
-├── faculty.html        # Faculty dashboard
-├── admin.html          # Admin dashboard
+├── index.html              # Student sign-up page
+├── login.html               # Role-based login (Student / Faculty / Admin)
+├── forgot-password.html     # OTP-based password reset
+├── student.html              # Student dashboard
+├── faculty.html               # Faculty dashboard
+├── admin.html                  # Admin dashboard
 ├── css/
-│   └── style.css       # Global styles
+│   └── style.css            # Global styles
 ├── js/
+│   ├── config.js             # API_BASE environment config
 │   ├── login.js
 │   ├── forgot-password.js
 │   ├── student.js
 │   ├── faculty.js
 │   └── admin.js
 └── backend/
-    ├── server.js       # Express app + rate limiting
-    ├── db.js           # PostgreSQL pool (Neon)
+    ├── server.js             # Express app, middleware, route mounting
+    ├── db.js                  # PostgreSQL pool (Neon) with error handling
     ├── middleware/
-    │   ├── auth.js         # JWT verify + role guard
-    │   ├── rateLimiter.js  # express-rate-limit config
-    │   └── otpLimiter.js   # Rate limits for OTP endpoints
+    │   ├── auth.js              # JWT verify + role guard
+    │   ├── rateLimiter.js       # express-rate-limit config
+    │   ├── otpLimiter.js        # Rate limits for OTP endpoints
+    │   └── upload.js             # Multer + Cloudinary storage config
     ├── utils/
-    │   └── mailer.js       # Nodemailer OTP email sender
+    │   └── mailer.js             # Resend OTP email sender
     ├── migrations/
     │   └── add_password_reset.sql
     └── routes/
-        ├── auth.js         # POST /login, /register, /forgot-password, /verify-otp, /reset-password
-        ├── achievements.js # CRUD + verify/reject + stats
-        ├── users.js        # Profile, student/faculty lists, bulk-import
-        └── export.js       # Excel + PDF generation
+        ├── auth.js               # login, register, forgot-password, verify-otp, reset-password
+        ├── achievements.js       # CRUD + verify/reject + stats
+        ├── users.js               # Profile, student/faculty lists, bulk-import
+        └── export.js               # Excel + PDF generation
 ```
 
 ---
@@ -152,15 +157,20 @@ achievements/
 | `title` | TEXT | |
 | `event_name` | TEXT | |
 | `event_type` | TEXT | `academic` \| `technical` \| `sports` \| `cultural` \| `social` |
-| `level` | TEXT | `international` \| `national` \| `state` \| `college` |
-| `result` | TEXT | `winner` \| `runner-up` \| `participant` |
+| `level` | TEXT | `international` \| `national` \| `state` \| `district` \| `college` |
+| `result` | TEXT | `winner` \| `runner_up` \| `participant` \| `organizer` |
+| `position` | TEXT | e.g. "1st Place", "Best Paper" |
+| `place_held` | TEXT | Location of the event |
+| `organiser_name` | TEXT | Organising body |
 | `start_date` / `end_date` | DATE | |
-| `certificate_url` | TEXT | Comma-separated filenames |
-| `photo_urls` | TEXT[] | Array of filenames |
+| `certificate_url` | TEXT | Comma-separated Cloudinary URLs |
+| `merit_url` | TEXT | Cloudinary URL |
+| `photo_urls` | TEXT[] | Array of Cloudinary URLs |
+| `description` | TEXT | Optional |
 | `status` | TEXT | `draft` \| `pending` \| `verified` \| `rejected` |
 | `remarks` | TEXT | Rejection reason |
 | `verified_by` | FK → users | Who approved/rejected |
-| `verified_at` | TIMESTAMP | |
+| `verified_at` | TIMESTAMPTZ | |
 
 ---
 
@@ -182,7 +192,7 @@ achievements/
 | `GET` | `/api/achievements/all` | Admin | All achievements |
 | `GET` | `/api/achievements/students` | Faculty | Assigned students' achievements |
 | `GET` | `/api/achievements/stats` | Admin | Dashboard chart data |
-| `POST` | `/api/achievements` | Student/Faculty | Submit achievement |
+| `POST` | `/api/achievements` | Student/Faculty | Submit achievement (multipart, files → Cloudinary) |
 | `PUT` | `/api/achievements/:id` | Student/Faculty | Edit own achievement |
 | `PATCH` | `/api/achievements/:id/status` | Admin/Faculty | Verify or reject |
 | `DELETE` | `/api/achievements/:id` | Student/Faculty | Delete own achievement |
@@ -211,7 +221,8 @@ achievements/
 ### Prerequisites
 - Node.js 18+
 - A PostgreSQL database (e.g. [Neon](https://neon.tech) — free tier)
-- A Gmail account with an [App Password](https://myaccount.google.com/apppasswords) for OTP emails
+- A [Resend](https://resend.com) account for OTP emails (free tier)
+- A [Cloudinary](https://cloudinary.com) account for file uploads (free tier)
 
 ### Backend Setup
 
@@ -226,8 +237,10 @@ Create a `.env` file in `backend/`:
 DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
 JWT_SECRET=your_super_secret_key_here
 PORT=5000
-GMAIL_USER=your_email@gmail.com
-GMAIL_APP_PASSWORD=your_16_char_app_password
+RESEND_API_KEY=your_resend_api_key
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 FRONTEND_URL=http://localhost:5500
 ```
 
@@ -249,7 +262,6 @@ npm start      # production
 No build step needed. Just open the HTML files directly in a browser **or** serve them with any static file server:
 
 ```bash
-# e.g. using VS Code Live Server, or:
 npx serve .
 ```
 
@@ -259,18 +271,27 @@ By default, the frontend connects to `http://localhost:5000`. To change this (e.
 
 ## 🌍 Deployment
 
-**Backend (Render, Railway, etc.):**
-1. Connect your GitHub repository to your hosting provider.
-2. Set the Build Command to `npm install` and the Start Command to `npm start`.
-3. Add all `.env` variables (Database URL, JWT Secret, Port, Gmail credentials, Frontend URL) in your hosting dashboard's Environment tab.
+**Backend (Render):**
+1. Connect your GitHub repository to Render, set Root Directory to `backend`.
+2. Build Command: `npm install` · Start Command: `npm start`.
+3. Add all `.env` variables in the Environment tab.
+4. `app.set('trust proxy', 1)` is required in `server.js` for accurate rate limiting behind Render's proxy.
 
-**Frontend (Vercel, Netlify, GitHub Pages):**
+**Frontend (Vercel):**
 1. Deploy the root directory containing the HTML/JS/CSS files.
-2. **Crucial Step:** Open `js/config.js` and change `API_BASE` to your deployed backend URL before pushing to GitHub.
+2. Update `API_BASE` in `js/config.js` to your Render backend URL before deploying.
+3. Once you have your Vercel URL, lock down backend CORS to that origin only.
+
+**Notes on production behavior:**
+- Render's free tier spins down after inactivity — first request after idle may take 30–50 seconds.
+- File uploads go directly to Cloudinary rather than local disk, since most PaaS providers (including Render) use an ephemeral filesystem that doesn't persist uploaded files across restarts/redeploys.
+- OTP emails are sent via Resend's HTTP API rather than SMTP, since Render's free tier blocks common outbound SMTP ports (465/587).
+
+---
 
 ## 👤 Account Creation
 
-Student accounts self-register with a `@gitam.in` email via `/signup.html`.
+Student accounts self-register with a `@gitam.in` email via `/index.html`.
 
 Faculty and admin accounts are created via `POST /api/auth/register` (role: `faculty` or `admin`),
 or bulk-imported by an existing admin via `POST /api/users/bulk-import`, which generates a
