@@ -9,7 +9,9 @@ const { apiLimiter, loginLimiter } = require('./middleware/rateLimiter');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'achievements-portal-bice.vercel.app'
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
