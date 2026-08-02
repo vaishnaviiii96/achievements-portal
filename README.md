@@ -1,26 +1,21 @@
-# 🎓 GITAM Achievements Portal
+# GITAM Achievements Portal
+
+A full-stack web portal built for GITAM Deemed to be University to track, manage and verify student and faculty achievements. Students upload certificates, faculty and admins review/approve them and can export reports.
+
+**Live demo:** https://achievements-portal-bice.vercel.app
 
 ![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat&logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-4.x-000000?style=flat&logo=express)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-336791?style=flat&logo=postgresql&logoColor=white)
 ![JWT](https://img.shields.io/badge/Auth-JWT-orange?style=flat)
-![License](https://img.shields.io/badge/License-MIT-blue?style=flat)
 
-A full-stack web portal built for **GITAM Deemed to be University** to track, manage, and verify student and faculty achievements. Students upload certificates; faculty and admins review, approve, and export detailed reports.
-
-🔗 **Live Demo:** [achievements-portal-bice.vercel.app](https://achievements-portal-bice.vercel.app)
-
----
-
-## 📸 Screenshots
+## Screenshots
 
 | Student Dashboard | Faculty Dashboard | Admin Analytics |
 |---|---|---|
 | ![Student dashboard](screenshots/student-dashboard.png) | ![Faculty dashboard](screenshots/faculty-dashboard.png) | ![Admin dashboard](screenshots/admin-dashboard.png) |
 
----
-
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
 flowchart TD
@@ -34,273 +29,135 @@ flowchart TD
     E --> H[Cloudinary - file storage]
 ```
 
----
+## Features
 
-## ✨ Features
+**Student**
+- Sign up/login with GITAM email (`@gitam.in`)
+- Submit achievements with certificates, merit letters and proof photos
+- Save as draft, submit later
+- Track status — verified / pending / rejected
 
-### 👨‍🎓 Student Portal
-- Register and log in with GITAM email (`@gitam.in`)
-- Submit achievements with certificates, merit letters, and proof photos
-- Save drafts and submit when ready
-- View real-time status badges — ✅ Verified / ⏳ Pending / ❌ Rejected
+**Faculty**
+- View assigned students' submissions
+- Verify or reject with remarks
+- Export filtered data to Excel
 
-### 👩‍🏫 Faculty Portal
-- Browse and filter assigned students' achievements
-- Verify or reject achievements with remarks
-- Export filtered data to styled Excel reports
+**Admin**
+- Dashboard with charts (achievement type breakdown, monthly trend)
+- Approve/reject anything, bulk-import users, export Excel/PDF reports
 
-### 🛡️ Admin Portal
-- Full role-based dashboard with analytics charts
-- Doughnut chart (achievements by type) and bar chart (monthly trend)
-- Approve/reject any achievement with remarks
-- Download branded PDF reports per student
-- Manage users (students/faculty), bulk-import users via JSON
-- Export to Excel with GITAM-branded headers
+**Security**
+- JWT auth, bcrypt password hashing, role-based access control on every route
+- Rate limiting on login (10/15min) and general API (150/15min)
+- OTP password reset — codes are bcrypt-hashed before storage, expire in 10 min, rate-limited separately
+- No default/shared passwords anywhere — bulk-imported accounts get unique random temp passwords
+- CORS locked to the deployed frontend origin, parameterised SQL everywhere
 
-### 🔒 Security
-- JWT-based authentication (8-hour expiry)
-- Role-based access control (RBAC) on every API route
-- `bcrypt` password hashing (10 salt rounds)
-- API rate limiting — 10 login attempts / 15 min, 150 requests / 15 min
-- OTP-based password reset (bcrypt-hashed codes, 10-minute expiry, rate-limited)
-- XSS-safe HTML rendering (manual escaping on all user inputs)
-- Parameterised SQL queries (no SQL injection risk)
-- No shared or default credentials — bulk-imported users get unique random temp passwords
-- CORS restricted to the deployed frontend origin only
+## Tech stack
 
----
+| Layer | Tech |
+|---|---|
+| Frontend | Vanilla HTML/CSS/JS |
+| Backend | Node.js, Express |
+| DB | PostgreSQL (Neon) |
+| Auth | JWT, bcrypt |
+| Email | Resend (HTTP API) |
+| File storage | Cloudinary via Multer |
+| Charts | Chart.js |
+| Reports | ExcelJS, PDFKit |
+| Hosting | Render (backend) + Vercel (frontend) |
 
-## 🛠 Tech Stack
+## Why Resend instead of Gmail SMTP, why Cloudinary instead of local disk
 
-| Layer | Technology |
-|-------|-----------|
-| **Frontend** | Vanilla HTML5, CSS3, JavaScript (Fetch API) |
-| **Fonts** | Google Fonts — DM Sans |
-| **Charts** | Chart.js 4.x |
-| **Backend** | Node.js 18+, Express 4.x |
-| **Database** | PostgreSQL (Neon serverless) |
-| **Auth** | JSON Web Tokens (`jsonwebtoken`), `bcrypt` |
-| **Email** | Resend HTTP API — OTP delivery |
-| **File Storage** | Cloudinary (via Multer) — certificates and proof photos |
-| **Excel Export** | ExcelJS (styled, branded headers) |
-| **PDF Reports** | PDFKit (GITAM-branded per-student reports) |
-| **Rate Limiting** | express-rate-limit |
-| **Hosting** | Render (backend), Vercel (frontend) |
+Started with Nodemailer + Gmail SMTP and local disk storage for uploads (`multer.diskStorage`). Both broke in production:
 
----
+- Render's free tier blocks outbound SMTP on the usual ports, so Gmail kept timing out / throwing `ENETUNREACH`. Switched to Resend, which sends over HTTPS instead of SMTP — no more port issues.
+- Render's filesystem is ephemeral. Anything saved to local disk disappears on the next deploy or restart, so uploaded certificates/photos would just vanish. Moved file uploads to Cloudinary so they persist.
 
-## 📐 Project Structure
+Also had to add `app.set('trust proxy', 1)` since Render sits behind a proxy and `express-rate-limit` needs that to read the real client IP from `X-Forwarded-For` correctly.
+
+## Project structure
 
 ```
 achievements/
-├── index.html              # Student sign-up page
-├── login.html               # Role-based login (Student / Faculty / Admin)
-├── forgot-password.html     # OTP-based password reset
-├── student.html              # Student dashboard
-├── faculty.html               # Faculty dashboard
-├── admin.html                  # Admin dashboard
-├── css/
-│   └── style.css            # Global styles
+├── index.html            # student sign-up
+├── login.html
+├── forgot-password.html
+├── student.html
+├── faculty.html
+├── admin.html
+├── css/style.css
 ├── js/
-│   ├── config.js             # API_BASE environment config
+│   ├── config.js         # API_BASE
 │   ├── login.js
 │   ├── forgot-password.js
 │   ├── student.js
 │   ├── faculty.js
 │   └── admin.js
 └── backend/
-    ├── server.js             # Express app, middleware, route mounting
-    ├── db.js                  # PostgreSQL pool (Neon) with error handling
+    ├── server.js
+    ├── db.js
     ├── middleware/
-    │   ├── auth.js              # JWT verify + role guard
-    │   ├── rateLimiter.js       # express-rate-limit config
-    │   ├── otpLimiter.js        # Rate limits for OTP endpoints
-    │   └── upload.js             # Multer + Cloudinary storage config
-    ├── utils/
-    │   └── mailer.js             # Resend OTP email sender
-    ├── migrations/
-    │   └── add_password_reset.sql
+    │   ├── auth.js
+    │   ├── rateLimiter.js
+    │   ├── otpLimiter.js
+    │   └── upload.js      # Multer + Cloudinary
+    ├── utils/mailer.js    # Resend
+    ├── migrations/add_password_reset.sql
     └── routes/
-        ├── auth.js               # login, register, forgot-password, verify-otp, reset-password
-        ├── achievements.js       # CRUD + verify/reject + stats
-        ├── users.js               # Profile, student/faculty lists, bulk-import
-        └── export.js               # Excel + PDF generation
+        ├── auth.js
+        ├── achievements.js
+        ├── users.js
+        └── export.js
 ```
 
----
+## Database
 
-## 🗄️ Database Schema (Key Tables)
+**users** — id, name, email, roll_number, faculty_code, password (bcrypt hash), role (student/faculty/admin), department, batch, year_of_study, faculty_id (FK), reset_otp_hash, reset_otp_expires, reset_otp_attempts
 
-### `users`
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | UUID / SERIAL | Primary key |
-| `name` | TEXT | |
-| `email` | TEXT | Students: must be `@gitam.in` |
-| `roll_number` | TEXT | Students only |
-| `faculty_code` | TEXT | Faculty / Admin |
-| `password` | TEXT | bcrypt hash |
-| `role` | TEXT | `student` \| `faculty` \| `admin` |
-| `department` | TEXT | |
-| `batch` | TEXT | e.g. `2022–2026` |
-| `year_of_study` | TEXT | |
-| `faculty_id` | FK → users | Student's assigned faculty |
-| `reset_otp_hash` | TEXT | bcrypt hash of active OTP (null if unused) |
-| `reset_otp_expires` | TIMESTAMPTZ | OTP expiry (10 min from issue) |
-| `reset_otp_attempts` | INTEGER | Failed verify attempts (locks after 5) |
+**achievements** — id, user_id (FK), title, event_name, event_type, level, result, position, place_held, organiser_name, start_date, end_date, certificate_url, merit_url, photo_urls (Cloudinary URLs), description, status, remarks, verified_by (FK), verified_at
 
-### `achievements`
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | SERIAL | Primary key |
-| `user_id` | FK → users | Submitter |
-| `title` | TEXT | |
-| `event_name` | TEXT | |
-| `event_type` | TEXT | `academic` \| `technical` \| `sports` \| `cultural` \| `social` |
-| `level` | TEXT | `international` \| `national` \| `state` \| `district` \| `college` |
-| `result` | TEXT | `winner` \| `runner_up` \| `participant` \| `organizer` |
-| `position` | TEXT | e.g. "1st Place", "Best Paper" |
-| `place_held` | TEXT | Location of the event |
-| `organiser_name` | TEXT | Organising body |
-| `start_date` / `end_date` | DATE | |
-| `certificate_url` | TEXT | Comma-separated Cloudinary URLs |
-| `merit_url` | TEXT | Cloudinary URL |
-| `photo_urls` | TEXT[] | Array of Cloudinary URLs |
-| `description` | TEXT | Optional |
-| `status` | TEXT | `draft` \| `pending` \| `verified` \| `rejected` |
-| `remarks` | TEXT | Rejection reason |
-| `verified_by` | FK → users | Who approved/rejected |
-| `verified_at` | TIMESTAMPTZ | |
+## API
 
----
+**Auth** — `POST /api/auth/login`, `/register`, `/forgot-password`, `/verify-otp`, `/reset-password`
 
-## 🔌 API Endpoints
+**Achievements** — `GET /mine`, `/all` (admin), `/students` (faculty), `/stats` (admin) · `POST /` submit · `PUT /:id` edit · `PATCH /:id/status` verify/reject · `DELETE /:id`
 
-### Auth
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/auth/login` | Login — returns JWT |
-| `POST` | `/api/auth/register` | Register new account |
-| `POST` | `/api/auth/forgot-password` | Request OTP for password reset |
-| `POST` | `/api/auth/verify-otp` | Verify OTP, returns short-lived reset token |
-| `POST` | `/api/auth/reset-password` | Set new password using reset token |
+**Users** — `GET /me`, `/students`, `/faculty` · `PUT /:id` · `POST /bulk-import`
 
-### Achievements
-| Method | Endpoint | Access | Description |
-|--------|----------|--------|-------------|
-| `GET` | `/api/achievements/mine` | Student/Faculty | Own achievements |
-| `GET` | `/api/achievements/all` | Admin | All achievements |
-| `GET` | `/api/achievements/students` | Faculty | Assigned students' achievements |
-| `GET` | `/api/achievements/stats` | Admin | Dashboard chart data |
-| `POST` | `/api/achievements` | Student/Faculty | Submit achievement (multipart, files → Cloudinary) |
-| `PUT` | `/api/achievements/:id` | Student/Faculty | Edit own achievement |
-| `PATCH` | `/api/achievements/:id/status` | Admin/Faculty | Verify or reject |
-| `DELETE` | `/api/achievements/:id` | Student/Faculty | Delete own achievement |
+**Export** — Excel/PDF endpoints under `/api/export/*`
 
-### Users
-| Method | Endpoint | Access | Description |
-|--------|----------|--------|-------------|
-| `GET` | `/api/users/me` | All | Own profile |
-| `GET` | `/api/users/students` | Faculty/Admin | Student list |
-| `GET` | `/api/users/faculty` | Admin | Faculty list |
-| `PUT` | `/api/users/:id` | Self/Admin | Update profile |
-| `POST` | `/api/users/bulk-import` | Admin | Bulk create users (unique random temp password per user) |
-
-### Export
-| Method | Endpoint | Access | Description |
-|--------|----------|--------|-------------|
-| `GET` | `/api/export/admin/excel` | Admin | Styled Excel for all achievements |
-| `GET` | `/api/export/faculty/excel` | Faculty | Styled Excel for assigned students |
-| `GET` | `/api/export/mine/excel` | Student/Faculty | Own achievements Excel |
-| `GET` | `/api/export/pdf/student/:id` | Admin/Faculty | PDF report per student |
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 18+
-- A PostgreSQL database (e.g. [Neon](https://neon.tech) — free tier)
-- A [Resend](https://resend.com) account for OTP emails (free tier)
-- A [Cloudinary](https://cloudinary.com) account for file uploads (free tier)
-
-### Backend Setup
+## Running locally
 
 ```bash
 cd backend
 npm install
 ```
 
-Create a `.env` file in `backend/`:
-
-```env
-DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
-JWT_SECRET=your_super_secret_key_here
+`.env` in `backend/`:
+```
+DATABASE_URL=postgresql://...
+JWT_SECRET=...
 PORT=5000
-RESEND_API_KEY=your_resend_api_key
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+RESEND_API_KEY=...
+CLOUDINARY_CLOUD_NAME=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
 FRONTEND_URL=http://localhost:5500
 ```
 
-Run the migration once against your database:
+Run the migration once: `psql "$DATABASE_URL" -f backend/migrations/add_password_reset.sql`
 
-```bash
-psql "$DATABASE_URL" -f backend/migrations/add_password_reset.sql
-```
+`npm run dev` (nodemon) or `npm start`. Frontend is static, just `npx serve .` or open the HTML files directly — set `API_BASE` in `js/config.js` to wherever your backend is running.
 
-Run the server:
+## Deployment
 
-```bash
-npm run dev    # development (nodemon)
-npm start      # production
-```
+Backend on Render (root dir `backend`, build `npm install`, start `npm start`, env vars in dashboard). Frontend on Vercel — root of repo, update `API_BASE` before deploying. Free tier on Render sleeps after inactivity so the first request after a while can take 30-50s.
 
-### Frontend Setup
+## Accounts
 
-No build step needed. Just open the HTML files directly in a browser **or** serve them with any static file server:
+Students self-register with `@gitam.in` email. Faculty/admin accounts get created via `/register` or bulk-imported (random temp password per user, nothing shared or hardcoded). Forgot password works for everyone via the OTP flow.
 
-```bash
-npx serve .
-```
+## License
 
-By default, the frontend connects to `http://localhost:5000`. To change this (e.g. for production), edit the `API_BASE` variable in `js/config.js`.
-
----
-
-## 🌍 Deployment
-
-**Backend (Render):**
-1. Connect your GitHub repository to Render, set Root Directory to `backend`.
-2. Build Command: `npm install` · Start Command: `npm start`.
-3. Add all `.env` variables in the Environment tab.
-4. `app.set('trust proxy', 1)` is required in `server.js` for accurate rate limiting behind Render's proxy.
-
-**Frontend (Vercel):**
-1. Deploy the root directory containing the HTML/JS/CSS files.
-2. Update `API_BASE` in `js/config.js` to your Render backend URL before deploying.
-3. Once you have your Vercel URL, lock down backend CORS to that origin only.
-
-**Notes on production behavior:**
-- Render's free tier spins down after inactivity — first request after idle may take 30–50 seconds.
-- File uploads go directly to Cloudinary rather than local disk, since most PaaS providers (including Render) use an ephemeral filesystem that doesn't persist uploaded files across restarts/redeploys.
-- OTP emails are sent via Resend's HTTP API rather than SMTP, since Render's free tier blocks common outbound SMTP ports (465/587).
-
----
-
-## 👤 Account Creation
-
-Student accounts self-register with a `@gitam.in` email via `/index.html`.
-
-Faculty and admin accounts are created via `POST /api/auth/register` (role: `faculty` or `admin`),
-or bulk-imported by an existing admin via `POST /api/users/bulk-import`, which generates a
-unique random temporary password per user — no shared or default credentials are used anywhere
-in this system. Any user can reset their own password anytime via the "Forgot Password" flow
-(OTP sent to their registered email).
-
----
-
-## 📄 License
-
-MIT — free to use and modify.
+MIT
