@@ -2,23 +2,8 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { verifyToken, verifyRole } = require('../middleware/auth');
-const multer = require('multer');
-const path = require('path');
+const upload = require('../middleware/upload'); // Cloudinary-backed multer
 
-// ── Multer config ────────────────────────────────────────
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) =>
-    cb(null, `${Date.now()}-${file.fieldname}${path.extname(file.originalname)}`)
-});
-const upload = multer({
-  storage,
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const allowed = ['image/jpeg', 'image/png', 'application/pdf', 'image/webp'];
-    cb(null, allowed.includes(file.mimetype));
-  }
-});
 const uploadFields = upload.fields([
   { name: 'certificate', maxCount: 5 },  // multiple certificates
   { name: 'merit',       maxCount: 1 },
@@ -33,18 +18,16 @@ router.post('/', verifyToken, verifyRole('student','faculty'), uploadFields, asy
     organiser_name, status
   } = req.body;
 
-  // Draft allows partial data; only validate required fields for non-drafts
   const isDraft = status === 'draft';
 
   if (!isDraft && (!title || !event_name || !event_type || !level || !start_date || !end_date))
     return res.status(400).json({ error: 'Required fields missing.' });
 
-  // certificate_url: store all uploaded cert filenames as array, join with comma for text column
-  // or store first one only — keeping compatible with existing TEXT column
-  const certFiles = req.files?.certificate?.map(f => f.filename) || [];
+  // Cloudinary storage puts the full hosted URL in file.path (not file.filename)
+  const certFiles = req.files?.certificate?.map(f => f.path) || [];
   const certificate_url = certFiles.length > 0 ? certFiles.join(',') : null;
-  const merit_url       = req.files?.merit?.[0]?.filename || null;
-  const photo_urls      = req.files?.photos?.map(f => f.filename) || [];
+  const merit_url       = req.files?.merit?.[0]?.path || null;
+  const photo_urls      = req.files?.photos?.map(f => f.path) || [];
 
   const finalStatus = isDraft ? 'draft' : 'pending';
 
@@ -87,7 +70,6 @@ router.get('/mine', verifyToken, verifyRole('student','faculty'), async (req, re
 
 // ── GET /api/achievements/students — faculty views (READ-ONLY) ──────────────
 router.get('/students', verifyToken, verifyRole('faculty'), async (req, res) => {
-  const { student_id, event_type, level, year } = req.query;
   try {
     const assignedCheck = await pool.query(
       `SELECT COUNT(*) FROM users WHERE faculty_id = $1 AND role = 'student'`,
@@ -121,14 +103,13 @@ router.get('/students', verifyToken, verifyRole('faculty'), async (req, res) => 
 
     const { student_id, event_type, level, year, search, result: result_filter, department } = req.query;
 
-// ...keep everything above the same, then add:
-if (student_id)    { query += ` AND a.user_id    = $${idx++}`; params.push(student_id); }
-if (event_type)    { query += ` AND a.event_type = $${idx++}`; params.push(event_type); }
-if (level)         { query += ` AND a.level      = $${idx++}`; params.push(level); }
-if (result_filter) { query += ` AND a.result     = $${idx++}`; params.push(result_filter); }
-if (department)    { query += ` AND u.department = $${idx++}`; params.push(department); }
-if (year)          { query += ` AND EXTRACT(YEAR FROM a.start_date) = $${idx++}`; params.push(parseInt(year)); }
-if (search)        { query += ` AND (u.name ILIKE $${idx} OR u.roll_number ILIKE $${idx})`; idx++; params.push(`%${search}%`); }
+    if (student_id)    { query += ` AND a.user_id    = $${idx++}`; params.push(student_id); }
+    if (event_type)    { query += ` AND a.event_type = $${idx++}`; params.push(event_type); }
+    if (level)         { query += ` AND a.level      = $${idx++}`; params.push(level); }
+    if (result_filter) { query += ` AND a.result     = $${idx++}`; params.push(result_filter); }
+    if (department)    { query += ` AND u.department = $${idx++}`; params.push(department); }
+    if (year)          { query += ` AND EXTRACT(YEAR FROM a.start_date) = $${idx++}`; params.push(parseInt(year)); }
+    if (search)        { query += ` AND (u.name ILIKE $${idx} OR u.roll_number ILIKE $${idx})`; idx++; params.push(`%${search}%`); }
 
     query += ' ORDER BY a.created_at DESC';
 
@@ -196,15 +177,14 @@ router.put('/:id', verifyToken, verifyRole('student','faculty'), uploadFields, a
     );
     if (existing.rows.length === 0) return res.status(404).json({ error: 'Achievement not found.' });
 
-    const certFiles = req.files?.certificate?.map(f => f.filename) || [];
+    const certFiles = req.files?.certificate?.map(f => f.path) || [];
     const certificate_url = certFiles.length > 0
       ? certFiles.join(',')
       : existing.rows[0].certificate_url;
 
-    const merit_url  = req.files?.merit?.[0]?.filename || existing.rows[0].merit_url;
-    const photo_urls = req.files?.photos?.map(f => f.filename) || existing.rows[0].photo_urls;
+    const merit_url  = req.files?.merit?.[0]?.path || existing.rows[0].merit_url;
+    const photo_urls = req.files?.photos?.map(f => f.path) || existing.rows[0].photo_urls;
 
-    // If status sent as 'pending' (submitting a draft), keep it; else keep existing status
     const finalStatus = status === 'pending' ? 'pending' : (status === 'draft' ? 'draft' : existing.rows[0].status);
 
     const updated = await pool.query(
@@ -253,7 +233,6 @@ router.patch('/:id/status', verifyToken, verifyRole('admin', 'faculty'), async (
   }
 
   try {
-    // Check the achievement exists and is not a draft
     const existing = await pool.query('SELECT * FROM achievements WHERE id = $1', [req.params.id]);
     if (existing.rows.length === 0) return res.status(404).json({ error: 'Achievement not found.' });
 
@@ -262,7 +241,6 @@ router.patch('/:id/status', verifyToken, verifyRole('admin', 'faculty'), async (
       return res.status(400).json({ error: 'Cannot verify or reject a draft.' });
     }
 
-    // Prevent self-verification
     if (ach.user_id === req.user.id) {
       return res.status(403).json({ error: 'You cannot verify your own achievement.' });
     }
@@ -289,14 +267,12 @@ router.patch('/:id/status', verifyToken, verifyRole('admin', 'faculty'), async (
 // ── GET /api/achievements/stats — dashboard analytics ──
 router.get('/stats', verifyToken, verifyRole('admin'), async (req, res) => {
   try {
-    // Category breakdown
     const typeResult = await pool.query(
       `SELECT event_type, COUNT(*)::int AS count
        FROM achievements WHERE status != 'draft'
        GROUP BY event_type ORDER BY count DESC`
     );
 
-    // Monthly trend (last 12 months)
     const monthResult = await pool.query(
       `SELECT TO_CHAR(created_at, 'YYYY-MM') AS month, COUNT(*)::int AS count
        FROM achievements WHERE status != 'draft'
@@ -304,14 +280,12 @@ router.get('/stats', verifyToken, verifyRole('admin'), async (req, res) => {
        GROUP BY month ORDER BY month`
     );
 
-    // Status breakdown
     const statusResult = await pool.query(
       `SELECT status, COUNT(*)::int AS count
        FROM achievements WHERE status != 'draft'
        GROUP BY status`
     );
 
-    // Level breakdown
     const levelResult = await pool.query(
       `SELECT level, COUNT(*)::int AS count
        FROM achievements WHERE status != 'draft'

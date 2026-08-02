@@ -511,7 +511,7 @@ function openModal(id) {
         <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Proof Photos</div>
         <div style="display:flex;flex-wrap:wrap;gap:8px">
           ${photoUrls.map(url => `
-            <img src="${API_BASE}/uploads/${url}"
+            <img src="${url.trim()}"
               onclick="openLightbox(this.src)"
               style="width:90px;height:90px;object-fit:cover;border-radius:8px;border:2px solid var(--teal-mid);cursor:pointer;transition:transform .15s"
               onmouseover="this.style.transform='scale(1.05)'"
@@ -530,11 +530,11 @@ function openModal(id) {
           ${certFiles.map(f => {
             const isPdf = f.toLowerCase().endsWith('.pdf');
             return isPdf
-              ? `<a href="${API_BASE}/uploads/${f}" target="_blank" class="btn btn-sm btn-out">
+              ? `<a href="${f}" target="_blank" class="btn btn-sm btn-out">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                   View PDF
                 </a>`
-              : `<img src="${API_BASE}/uploads/${f}"
+              : `<img src="${f}"
                     onclick="openLightbox(this.src)"
                     style="max-width:140px;max-height:140px;object-fit:contain;border-radius:8px;border:1px solid var(--border);cursor:pointer"/>`;
           }).join('')}
