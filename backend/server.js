@@ -7,7 +7,7 @@ const { otpRequestLimiter, otpVerifyLimiter } = require('./middleware/otpLimiter
 const { apiLimiter, loginLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
-
+app.set('trust proxy', 1);
 // Middleware
 app.use(cors({
   origin: 'https://achievements-portal-bice.vercel.app'
