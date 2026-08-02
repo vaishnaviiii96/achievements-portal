@@ -245,7 +245,7 @@
     <button class="btn" id="signupBtn" onclick="doSignup()">CREATE ACCOUNT</button>
 
     <div class="foot">
-      Already registered? <a href="index.html">Login here</a>
+      Already registered? <a href="login.html">Login here</a>
     </div>
   </div>
 </div>
@@ -294,7 +294,7 @@
         setAlert(data.message || 'Registration failed. Please try again.', 'err');
       } else {
         setAlert('Account created! Redirecting to login…', 'ok');
-        setTimeout(() => window.location.href = 'index.html', 1500);
+        setTimeout(() => window.location.href = 'login.html', 1500);
       }
     } catch {
       setAlert('Cannot reach server. Is the backend running on port 5000?', 'err');
