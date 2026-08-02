@@ -1,0 +1,310 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My-GITAM — Sign Up</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal: #0A7C6C;
+      --teal-dark: #087A63;
+      --text: #292524;
+      --muted:     #6b7280;
+      --border:    #d1d5db;
+      --error:     #dc2626;
+      --success:   #059669;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #FAF9F6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Logo */
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .logo-wrap svg { width: 52px; height: 52px; }
+
+    .logo-name-col { display: flex; flex-direction: column; line-height: 1; }
+
+    .logo-name {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--teal);
+      letter-spacing: 0.02em;
+    }
+
+    .logo-sub {
+      font-size: 0.55rem;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .page-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--teal);
+      margin-bottom: 4px;
+    }
+
+    .page-note {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 26px;
+      text-align: center;
+    }
+
+    /* Fields */
+    .form { width: 100%; }
+
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .field { width: 100%; margin-bottom: 20px; }
+
+    .field label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 6px;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      border: none;
+      border-bottom: 1.5px solid var(--border);
+      padding: 9px 0;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      color: var(--text);
+      background: transparent;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+    }
+
+    .field input::placeholder { color: #b0bec5; }
+    .field input:focus,
+    .field select:focus { border-color: var(--teal); }
+
+    .email-hint {
+      font-size: 0.72rem;
+      color: var(--error);
+      margin-top: 4px;
+      display: none;
+    }
+
+    /* Submit */
+    .btn {
+      display: block;
+      width: 100%;
+      background: var(--teal);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 0;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 4px;
+    }
+
+    .btn:hover  { background: var(--teal-dark); }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .foot {
+      text-align: center;
+      margin-top: 18px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .foot a { color: var(--teal); text-decoration: none; font-weight: 500; }
+    .foot a:hover { text-decoration: underline; }
+
+    .alert {
+      width: 100%;
+      padding: 10px 13px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      margin-bottom: 16px;
+      display: none;
+      text-align: center;
+    }
+
+    .alert.err { background: #fef2f2; color: var(--error);   border: 1px solid #fecaca; display: block; }
+    .alert.ok  { background: #ecfdf5; color: var(--success); border: 1px solid #a7f3d0; display: block; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+
+  <!-- Logo -->
+  <div class="logo-wrap">
+    <img class="logo-svg" src="gitam-logo.png" style="width: 52px; height: 52px; object-fit: contain; border-radius: 8px;" alt="GITAM Logo" />
+    <div class="logo-name-col">
+      <span class="logo-name">GITAM</span>
+      <span class="logo-sub">Deemed to be University</span>
+    </div>
+  </div>
+
+  <div class="page-title">Create Student Account</div>
+  <p class="page-note">Faculty accounts are created by the administrator.</p>
+
+  <div id="alert" class="alert"></div>
+
+  <div class="form">
+    <div class="two">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="suName" placeholder="Your full name"/>
+      </div>
+      <div class="field">
+        <label>Roll Number</label>
+        <input type="text" id="suRoll" placeholder="22BCE1234"/>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>GITAM Email</label>
+      <input type="email" id="suEmail" placeholder="22bce1234@gitam.in"
+             oninput="checkEmail()"/>
+      <span class="email-hint" id="emailHint">Must end with @gitam.in</span>
+    </div>
+
+    <div class="two">
+      <div class="field">
+        <label>Department</label>
+        <select id="suDept">
+          <option value="" disabled selected>Select</option>
+          <option>CSE</option><option>ECE</option><option>EEE</option>
+          <option>MECH</option><option>CIVIL</option><option>MBA</option>
+          <option>MCA</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Batch</label>
+        <input type="text" id="suBatch" placeholder="2022–2026"/>
+      </div>
+    </div>
+
+    <div class="two">
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="suPw" placeholder="Min 8 characters"/>
+      </div>
+      <div class="field">
+        <label>Confirm Password</label>
+        <input type="password" id="suCf" placeholder="Re-enter"/>
+      </div>
+    </div>
+
+    <button class="btn" id="signupBtn" onclick="doSignup()">CREATE ACCOUNT</button>
+
+    <div class="foot">
+      Already registered? <a href="index.html">Login here</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script>
+  function checkEmail() {
+    const v    = document.getElementById('suEmail').value;
+    const hint = document.getElementById('emailHint');
+    hint.style.display = (v.length > 4 && !v.endsWith('@gitam.in')) ? 'block' : 'none';
+  }
+
+  function setAlert(msg, type) {
+    const el = document.getElementById('alert');
+    el.textContent = msg;
+    el.className = 'alert ' + type;
+  }
+
+  async function doSignup() {
+    const name  = document.getElementById('suName').value.trim();
+    const roll  = document.getElementById('suRoll').value.trim();
+    const email = document.getElementById('suEmail').value.trim().toLowerCase();
+    const dept  = document.getElementById('suDept').value;
+    const batch = document.getElementById('suBatch').value.trim();
+    const pw    = document.getElementById('suPw').value;
+    const cf    = document.getElementById('suCf').value;
+
+    if (!name || !roll || !email || !dept || !pw)  { setAlert('Please fill in all fields.', 'err'); return; }
+    if (!email.endsWith('@gitam.in'))               { setAlert('Email must end with @gitam.in', 'err'); return; }
+    if (pw !== cf)                                  { setAlert('Passwords do not match.', 'err'); return; }
+    if (pw.length < 8)                              { setAlert('Password must be at least 8 characters.', 'err'); return; }
+
+    const btn = document.getElementById('signupBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span>Creating account…';
+
+    try {
+      const res  = await fetch(API_BASE + '/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, roll_number: roll, email, department: dept, batch, password: pw, role: 'student' })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setAlert(data.message || 'Registration failed. Please try again.', 'err');
+      } else {
+        setAlert('Account created! Redirecting to login…', 'ok');
+        setTimeout(() => window.location.href = 'index.html', 1500);
+      }
+    } catch {
+      setAlert('Cannot reach server. Is the backend running on port 5000?', 'err');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'CREATE ACCOUNT';
+    }
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') doSignup(); });
+</script>
+</body>
+</html>

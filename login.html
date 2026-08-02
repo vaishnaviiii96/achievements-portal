@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — Achievements Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal: #0A7C6C;
+      --teal-dark: #087A63;
+      --text: #292524;
+      --muted:     #6b7280;
+      --border:    #c8d0d8;
+      --danger:    #dc2626;
+      --success:   #059669;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #FAF9F6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 460px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── Logo ── */
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .logo-svg { width: 64px; height: 64px; }
+
+    .logo-text { display: flex; flex-direction: column; line-height: 1; }
+
+    .logo-name {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--teal);
+      letter-spacing: 0.04em;
+    }
+
+    .logo-tagline {
+      font-size: 0.6rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      margin-top: 3px;
+    }
+
+    .portal-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--teal);
+      margin-bottom: 4px;
+    }
+
+    .portal-sub {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 28px;
+      text-align: center;
+    }
+
+    /* ── Role tabs ── */
+    .tabs {
+      display: flex;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 28px;
+      width: 100%;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 9px 0;
+      text-align: center;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      background: #fff;
+      border: none;
+      border-right: 1.5px solid var(--border);
+      transition: background 0.15s, color 0.15s;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .tab:last-child { border-right: none; }
+    .tab.active { background: var(--teal); color: #fff; }
+    .tab:not(.active):hover { background: #f0faf8; color: var(--teal); }
+
+    /* ── Alert ── */
+    .alert {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      margin-bottom: 18px;
+      display: none;
+      text-align: center;
+    }
+    .alert.err { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; display: block; }
+    .alert.ok  { background: #ecfdf5; color: var(--success); border: 1px solid #a7f3d0; display: block; }
+
+    /* ── Form ── */
+    .form { width: 100%; }
+
+    .field { width: 100%; margin-bottom: 24px; }
+
+    .field input {
+      width: 100%;
+      border: none;
+      border-bottom: 1.5px solid var(--border);
+      padding: 10px 0;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: transparent;
+      outline: none;
+      transition: border-color 0.2s;
+      text-align: center;
+    }
+
+    .field input::placeholder { color: var(--muted); }
+    .field input:focus { border-color: var(--teal); }
+
+    /* ── Button ── */
+    .btn {
+      display: block;
+      width: 160px;
+      margin: 6px auto 0;
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 0;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn:hover   { background: var(--teal-dark); }
+    .btn:active  { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      display: inline-block;
+      width: 13px; height: 13px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    /* ── Bottom links row ── */
+    .bottom-links {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 28px;
+    }
+
+    .bottom-links a {
+      font-size: 0.82rem;
+      color: var(--teal);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .bottom-links a:hover { text-decoration: underline; }
+
+    /* ── Register links ── */
+    .register-links {
+      width: 100%;
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .register-links p {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .register-links p a {
+      color: var(--teal);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .register-links p a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Logo -->
+  <div class="logo-row">
+    <img class="logo-svg" src="gitam-logo.png" style="width: 64px; height: 64px; object-fit: contain; border-radius: 8px;" alt="GITAM Logo" />
+    <div class="logo-text">
+      <span class="logo-name">GITAM</span>
+      <span class="logo-tagline">Deemed to be University</span>
+    </div>
+  </div>
+
+  <div class="portal-title">Achievements Portal</div>
+  <p class="portal-sub">Sign in to your account</p>
+
+  <!-- Role Tabs -->
+  <div class="tabs">
+    <button class="tab active" id="tab-student" onclick="switchRole('student', this)">Student</button>
+    <button class="tab"        id="tab-faculty" onclick="switchRole('faculty', this)">Faculty</button>
+    <button class="tab"        id="tab-admin"   onclick="switchRole('admin',   this)">Admin</button>
+  </div>
+
+  <!-- Alert -->
+  <div id="alert" class="alert"></div>
+
+  <!-- Form -->
+  <div class="form">
+    <div class="field">
+      <input type="text" id="identifier" placeholder="Roll Number" autocomplete="off"/>
+    </div>
+    <div class="field">
+      <input type="password" id="password" placeholder="Password" autocomplete="current-password"/>
+    </div>
+    <button class="btn" id="loginBtn" onclick="doLogin()">LOGIN</button>
+  </div>
+
+  <!-- Reset / Contact row -->
+  <div class="bottom-links">
+    <a href="forgot-password.html">Forgot password?</a>
+  </div>
+
+  <!-- Registration links -->
+  <div class="register-links">
+    <p>New student? <a href="signup.html?role=student">Create an account</a></p>
+    <p>Faculty? <a href="signup.html?role=faculty">Register here</a></p>
+    <p>Admin? <a href="signup.html?role=admin">Register here</a></p>
+  </div>
+
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/login.js"></script>
+</body>
+</html>

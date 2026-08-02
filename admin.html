@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GITAM Achievements Portal — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root{--teal: #0A7C6C;--teal-dark: #087A63;--teal-light:#e6f7f4;--teal-mid:#80cfc2;--text: #292524;--muted:#6b7280;--border:#c8d0d8;--danger:#dc2626;--danger-light:#fef2f2;--success:#059669;--success-light:#ecfdf5;--warning:#d97706;--warning-light:#fffbeb;--sidebar-w:230px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:#f4f7f6;color:var(--text);min-height:100vh}
+
+  .topbar{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--teal);color:#fff;height:52px;display:flex;align-items:center;padding:0 20px;gap:12px}
+  .topbar-logo{display:flex;align-items:center;gap:10px}
+  /* GITAM logo image */
+  .topbar-logo img.gitam-logo{height:34px;width:auto;object-fit:contain;flex-shrink:0}
+  .tb{font-size:13px;font-weight:600;line-height:1.2}
+  .tb span{display:block;font-weight:400;font-size:10px;opacity:.8}
+  .sep{border-left:1px solid rgba(255,255,255,.3);height:24px;margin:0 4px}
+  .tsub{font-size:12px;opacity:.8}
+  .tr{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .btn-logout{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 14px;border-radius:6px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:background .2s}
+  .btn-logout:hover{background:rgba(255,255,255,.3)}
+  .ham{display:none;background:none;border:none;color:#fff;cursor:pointer;padding:4px}
+
+  .sidebar{position:fixed;top:52px;left:0;bottom:0;width:var(--sidebar-w);background:#fff;border-right:1px solid var(--border);overflow-y:auto;z-index:90;transition:transform .28s ease}
+  .sp{padding:20px 16px 14px;border-bottom:1px solid var(--border);text-align:center}
+  .avatar{width:62px;height:62px;border-radius:50%;background:var(--teal-light);border:3px solid var(--teal-mid);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--teal);margin:0 auto 10px}
+  .pname{font-size:13px;font-weight:700}
+  .pid{font-size:11px;color:var(--muted);margin-top:2px}
+  .rtag{display:inline-block;background:#7c3aed;color:#fff;font-size:10px;font-weight:700;padding:2px 10px;border-radius:20px;margin-top:6px;text-transform:uppercase;letter-spacing:.5px}
+  .nav{padding:8px 0}
+  .ni{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-left:3px solid transparent;transition:all .18s;text-decoration:none;user-select:none}
+  .ni:hover{background:var(--teal-light);color:var(--teal)}
+  .ni.active{background:var(--teal-light);color:var(--teal);border-left-color:var(--teal);font-weight:600}
+  .ni svg{width:17px;height:17px;flex-shrink:0}
+  .nav-section{padding:8px 18px 4px;font-size:10px;font-weight:700;color:var(--border);text-transform:uppercase;letter-spacing:.8px;margin-top:6px}
+
+  .main{margin-left:var(--sidebar-w);margin-top:52px;padding:24px;min-height:calc(100vh - 52px)}
+
+  .ph{margin-bottom:20px}
+  .bc{font-size:11px;color:var(--muted);margin-bottom:5px}
+  .bc span{color:var(--teal)}
+  .ph h1{font-size:20px;font-weight:700}
+  .ph p{font-size:13px;color:var(--muted);margin-top:3px}
+  .phr{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+  .stats{display:grid;grid-template-columns:repeat(1,1fr);gap:14px;margin-bottom:20px;max-width:340px}
+  .stats-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+  .sc{background:#fff;border-radius:10px;padding:16px 18px;border:1px solid var(--border);display:flex;align-items:center;gap:12px}
+  .sc-sm{padding:12px 14px;gap:10px}
+  .si{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .si-sm{width:36px;height:36px;border-radius:8px}
+  .si svg{width:21px;height:21px}
+  .si-sm svg{width:17px;height:17px}
+  .si.t{background:var(--teal-light);color:var(--teal)}
+  .si.w{background:var(--warning-light);color:var(--warning)}
+  .si.s{background:var(--success-light);color:var(--success)}
+  .si.d{background:var(--danger-light);color:var(--danger)}
+  .si.p{background:#f5f3ff;color:#7c3aed}
+  .si.b{background:#eff6ff;color:#2563eb}
+  .sl{font-size:11px;color:var(--muted);margin-bottom:3px}
+  .sv{font-size:22px;font-weight:700;line-height:1}
+  .sv-sm{font-size:18px}
+  .ss{font-size:10px;color:var(--muted);margin-top:2px}
+
+  .card{background:#fff;border-radius:10px;border:1px solid var(--border);overflow:hidden;margin-bottom:16px}
+  .card:last-child{margin-bottom:0}
+  .ch{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .ct{font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px}
+  .ct svg{width:15px;height:15px;color:var(--teal)}
+  .ca{font-size:12px;font-weight:600;color:var(--teal);cursor:pointer;text-decoration:none}
+
+  .tw{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{text-align:left;padding:8px 12px;background:#f8fafb;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+  tbody td{padding:10px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#fafafa}
+
+  .empty{text-align:center;padding:32px 20px;color:var(--muted)}
+  .empty p{font-size:13px}
+  code{font-size:11px}
+
+  .badge{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px}
+  .bs{background:#f5f3ff;color:#7c3aed}
+  .bf{background:var(--teal-light);color:var(--teal)}
+  .ba{background:#eff6ff;color:#2563eb}
+  /* Status badges */
+  .status-pending{background:#fffbeb;color:#d97706;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px}
+  .status-verified{background:var(--success-light);color:var(--success);font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px}
+  .status-rejected{background:var(--danger-light);color:var(--danger);font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px}
+  /* Charts */
+  .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+  .chart-card{background:#fff;border-radius:10px;border:1px solid var(--border);padding:18px 18px 14px}
+  .chart-canvas-wrap{position:relative;height:240px;width:100%}
+  .chart-title{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:6px;color:var(--text)}
+  .chart-title svg{width:14px;height:14px;color:var(--teal)}
+  .chart-empty{height:240px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
+  /* Verify/Reject action buttons */
+  .btn-verify{display:inline-flex;align-items:center;gap:5px;background:var(--success);color:#fff;border:none;padding:7px 14px;border-radius:7px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:background .18s}
+  .btn-verify:hover{background:#047857}
+  .btn-reject{display:inline-flex;align-items:center;gap:5px;background:var(--danger);color:#fff;border:none;padding:7px 14px;border-radius:7px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:background .18s}
+  .btn-reject:hover{background:#b91c1c}
+  .btn-pdf{display:inline-flex;align-items:center;gap:5px;background:#7c3aed;color:#fff;border:none;padding:7px 14px;border-radius:7px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:background .18s}
+  .btn-pdf:hover{background:#6d28d9}
+  .remarks-box{width:100%;margin-top:10px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:12px;resize:vertical;min-height:60px;outline:none}
+  .remarks-box:focus{border-color:var(--danger)}
+  .modal-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+  @media(max-width:768px){.charts-row{grid-template-columns:1fr}}
+
+  .btn{display:inline-flex;align-items:center;gap:5px;background:var(--teal);color:#fff;border:none;padding:8px 18px;border-radius:7px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .18s;text-decoration:none}
+  .btn:hover{background:var(--teal-dark)}
+  .btn-sm{padding:5px 11px;font-size:12px;border-radius:6px}
+  .btn-out{background:transparent;color:var(--teal);border:1px solid var(--teal)}
+  .btn-out:hover{background:var(--teal-light)}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+  .btn-ghost:hover{background:#f4f4f4;color:var(--text)}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+  select,input[type=text],input[type=date]{font-family:inherit;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;outline:none;color:var(--text);background:#fff}
+  select:focus,input:focus{border-color:var(--teal)}
+  .filter-label{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;align-self:center}
+
+  .rec-count{font-size:12px;color:var(--muted);font-weight:500}
+
+  #load-spinner{display:none;align-items:center;justify-content:center;gap:10px;padding:18px;color:var(--muted);font-size:13px}
+  .spin{width:20px;height:20px;border:2px solid var(--teal-mid);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  #load-error-banner{display:none;align-items:flex-start;gap:10px;background:var(--danger-light);border:1px solid #fca5a5;border-radius:8px;padding:12px 16px;margin-bottom:16px}
+  #load-error-banner svg{flex-shrink:0;margin-top:1px}
+  .err-body{flex:1}
+  .err-title{font-size:13px;font-weight:700;color:var(--danger);margin-bottom:3px}
+  .err-detail{font-size:12px;color:#b91c1c;font-family:monospace;word-break:break-all}
+  .btn-retry{background:var(--danger);color:#fff;border:none;padding:5px 12px;border-radius:6px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;margin-top:8px}
+  .btn-retry:hover{background:#b91c1c}
+
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:89}
+  .sname{font-weight:600;font-size:13px}
+  .sroll{font-size:11px;color:var(--muted)}
+
+  .modal-wrap{display:none;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;background:rgba(0,0,0,.45);padding:16px}
+  .modal{background:#fff;border-radius:14px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+  .modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .modal-title{font-size:14px;font-weight:700;color:var(--teal)}
+  .modal-close{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+  .modal-close:hover{background:#f0f0f0;color:var(--text)}
+  .modal-body{padding:20px}
+
+  .lightbox{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.85);align-items:center;justify-content:center;cursor:zoom-out}
+  .lightbox img{max-width:92vw;max-height:92vh;border-radius:8px;object-fit:contain}
+
+  @media(max-width:1100px){.stats-4{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:768px){
+    .sidebar{transform:translateX(-100%)}
+    .sidebar.open{transform:translateX(0)}
+    .overlay.show{display:block}
+    .ham{display:block}
+    .main{margin-left:0;padding:16px}
+    .tsub{display:none}
+    .stats{max-width:100%}
+    .stats-4{grid-template-columns:repeat(2,1fr)}
+    .btn-row{gap:6px}
+  }
+  @media(max-width:480px){.sv{font-size:18px}.sv-sm{font-size:15px}}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="closeSb()"></div>
+
+<header class="topbar">
+  <button class="ham" onclick="toggleSb()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="topbar-logo">
+    <!-- GITAM logo — place gitam-logo.png in the same folder as this HTML file -->
+    <img class="gitam-logo" src="gitam-logo.png" alt="GITAM University"/>
+    <div class="tb">GITAM <span>Deemed to be University</span></div>
+  </div>
+  <div class="sep"></div>
+  <div class="tsub">Achievements Portal → Admin</div>
+  <div class="tr">
+    <button class="btn-logout" onclick="logout()">Logout</button>
+  </div>
+</header>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sp">
+    <div class="avatar" id="av">AD</div>
+    <div class="pname" id="pname">Admin</div>
+    <div class="pid" id="pid">—</div>
+    <div class="rtag">Admin</div>
+  </div>
+  <div class="nav">
+    <div class="nav-section">Overview</div>
+    <a class="ni active" id="nav-dashboard" onclick="show('dashboard', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <div class="nav-section">Manage</div>
+    <a class="ni" id="nav-student-achievements" onclick="show('student-achievements', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+      Student Achievements
+    </a>
+    <a class="ni" id="nav-faculty-achievements" onclick="show('faculty-achievements', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Faculty Achievements
+    </a>
+  </div>
+</nav>
+
+<main class="main">
+
+  <!-- Global loading / error -->
+  <div id="load-spinner">
+    <div class="spin"></div>
+    Loading portal data…
+  </div>
+  <div id="load-error-banner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <div class="err-body">
+      <div class="err-title">Some data could not be loaded</div>
+      <div class="err-detail" id="load-error-msg"></div>
+      <button class="btn-retry" onclick="loadAll()">↺ Retry</button>
+    </div>
+  </div>
+
+  <!-- ── Dashboard ── -->
+  <div id="page-dashboard">
+    <div class="ph">
+      <div class="bc">Admin Portal → <span>Dashboard</span></div>
+      <h1>Admin Dashboard</h1>
+      <p>Full overview of the GITAM Achievements Portal</p>
+    </div>
+
+    <div class="stats">
+      <div class="sc">
+        <div class="si b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg></div>
+        <div><div class="sl">Total Achievements</div><div class="sv" id="s-total">—</div><div class="ss">submitted</div></div>
+      </div>
+    </div>
+
+    <div class="stats-4" style="margin-bottom:20px">
+      <div class="sc sc-sm">
+        <div class="si si-sm t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <div><div class="sl">Academic</div><div class="sv sv-sm" id="s-academic">—</div></div>
+      </div>
+      <div class="sc sc-sm">
+        <div class="si si-sm b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+        <div><div class="sl">Technical</div><div class="sv sv-sm" id="s-technical">—</div></div>
+      </div>
+      <div class="sc sc-sm">
+        <div class="si si-sm w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
+        <div><div class="sl">Sports</div><div class="sv sv-sm" id="s-sports">—</div></div>
+      </div>
+      <div class="sc sc-sm">
+        <div class="si si-sm p"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+        <div><div class="sl">Cultural</div><div class="sv sv-sm" id="s-cultural">—</div></div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+          Achievements by Type
+        </div>
+        <div class="chart-canvas-wrap" id="chart-type-wrap">
+          <canvas id="chart-type"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Monthly Submissions (12 months)
+        </div>
+        <div class="chart-canvas-wrap" id="chart-monthly-wrap">
+          <canvas id="chart-monthly"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch">
+        <div class="ct">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+          Recent Achievements
+        </div>
+        <a class="ca" onclick="show('student-achievements', document.getElementById('nav-student-achievements'))">View all →</a>
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>View</th><th>Name</th><th>Title</th><th>Type</th><th>Date</th><th>Status</th></tr></thead>
+        <tbody id="dt-ach">
+          <tr><td colspan="6"><div class="empty"><p>Loading…</p></div></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ── Student Achievements ── -->
+  <div id="page-student-achievements" style="display:none">
+    <div class="ph">
+      <div class="bc">Admin Portal → <span>Student Achievements</span></div>
+      <div class="phr">
+        <div>
+          <h1>Student Achievements</h1>
+          <p>All achievements submitted by students &nbsp;<span class="rec-count" id="student-ach-count"></span></p>
+        </div>
+        <div class="btn-row">
+          <input type="text" id="fsearch-s" placeholder="Search by roll no. or name…" oninput="filterStudentAch()" style="width:190px"/>
+          <select id="ftype-s" onchange="filterStudentAch()">
+            <option value="">All Types</option>
+            <option value="academic">Academic</option>
+            <option value="technical">Technical</option>
+            <option value="sports">Sports</option>
+            <option value="cultural">Cultural</option>
+            <option value="social">Social</option>
+          </select>
+          <span class="filter-label">From</span>
+          <input type="date" id="fdate-from-s" onchange="filterStudentAch()"/>
+          <span class="filter-label">To</span>
+          <input type="date" id="fdate-to-s" onchange="filterStudentAch()"/>
+          <button class="btn btn-sm btn-ghost" onclick="clearStudentFilters()">Clear</button>
+          <button class="btn btn-sm" onclick="exportAll('student')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export Excel
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tw"><table>
+        <thead><tr><th>#</th><th>Student</th><th>View</th><th>Title</th><th>Type</th><th>Level</th><th>Result</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody id="tb-student-ach">
+          <tr><td colspan="9"><div class="empty"><p>Loading…</p></div></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ── Faculty Achievements ── -->
+  <div id="page-faculty-achievements" style="display:none">
+    <div class="ph">
+      <div class="bc">Admin Portal → <span>Faculty Achievements</span></div>
+      <div class="phr">
+        <div>
+          <h1>Faculty Achievements</h1>
+          <p>Achievements submitted by faculty members &nbsp;<span class="rec-count" id="faculty-ach-count"></span></p>
+        </div>
+        <div class="btn-row">
+          <input type="text" id="fsearch-f" placeholder="Search by faculty ID or name…" oninput="filterFacultyAch()" style="width:200px"/>
+          <select id="ftype-f" onchange="filterFacultyAch()">
+            <option value="">All Types</option>
+            <option value="academic">Academic</option>
+            <option value="technical">Technical</option>
+            <option value="sports">Sports</option>
+            <option value="cultural">Cultural</option>
+            <option value="social">Social</option>
+          </select>
+          <span class="filter-label">From</span>
+          <input type="date" id="fdate-from-f" onchange="filterFacultyAch()"/>
+          <span class="filter-label">To</span>
+          <input type="date" id="fdate-to-f" onchange="filterFacultyAch()"/>
+          <button class="btn btn-sm btn-ghost" onclick="clearFacultyFilters()">Clear</button>
+          <button class="btn btn-sm" onclick="exportAll('faculty')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export Excel
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tw"><table>
+        <thead><tr><th>#</th><th>Faculty</th><th>View</th><th>Title</th><th>Type</th><th>Level</th><th>Result</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody id="tb-faculty-ach">
+          <tr><td colspan="9"><div class="empty"><p>Loading…</p></div></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── View Modal ── -->
+<div class="modal-wrap" id="view-modal" onclick="if(event.target===this)closeViewModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Achievement Details</div>
+      <button class="modal-close" onclick="closeViewModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <!-- Verify / Reject / PDF actions -->
+    <div class="modal-actions" id="modal-actions" style="padding:0 20px 20px">
+      <button class="btn-verify" id="btn-verify" onclick="verifyAchievement()"
+              style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg>
+        Verify
+      </button>
+      <div id="reject-section" style="display:none;flex-direction:column;gap:6px;flex:1">
+        <button class="btn-reject" onclick="toggleRejectBox()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Reject
+        </button>
+        <div id="reject-box" style="display:none">
+          <textarea class="remarks-box" id="reject-remarks" placeholder="Reason for rejection (optional)…"></textarea>
+          <button class="btn-reject" style="margin-top:6px" onclick="rejectAchievement()">Confirm Reject</button>
+        </div>
+      </div>
+      <button class="btn-pdf" id="btn-pdf" onclick="downloadPDF()" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Download PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Lightbox ── -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt=""/>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
