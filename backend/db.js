@@ -6,6 +6,11 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+// Catch idle client errors so they don't crash the server
+pool.on('error', (err) => {
+  console.error('❌ Unexpected error on idle database client', err);
+});
+
 pool.connect()
   .then(() => console.log('✅ Connected to Neon PostgreSQL'))
   .catch(err => console.error('❌ DB connection error:', err.message));
