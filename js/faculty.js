@@ -120,7 +120,7 @@ function runExport() {
   if (year)   params.set('year', year);
 
   const token = localStorage.getItem('token');
-  fetch('`${API_BASE}/api/export/my-achievements?' + params.toString(), {
+  fetch(`${API_BASE}/api/export/my-achievements?` + params.toString(), {
     headers: { 'Authorization': 'Bearer ' + token }
   })
   .then(r => {
@@ -415,7 +415,7 @@ async function submitAchievement() {
   for (let i = 0; i < photos.length; i++) fd.append('photos', photos[i]);
 
   try {
-    const r = await fetch('`${API_BASE}/api/achievements', {
+    const r = await fetch(`${API_BASE}/api/achievements`, {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
       body: fd
@@ -450,7 +450,7 @@ async function exportMyAchievements() {
   try {
     const token = localStorage.getItem('token');
     // Use the export route — it streams an xlsx file
-    const r = await fetch('`${API_BASE}/api/export/my-students', {
+    const r = await fetch(`${API_BASE}/api/export/my-students`, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
 
@@ -818,7 +818,7 @@ async function saveDraft() {
   for (let i = 0; i < photos.length; i++) fd.append('photos', photos[i]);
 
   try {
-    const r = await fetch('`${API_BASE}/api/achievements', {
+    const r = await fetch(`${API_BASE}/api/achievements`, {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
       body: fd
@@ -1032,7 +1032,7 @@ async function exportStudents() {
     if (result) params.set('result', result);
     if (year)   params.set('year', year);
 
-    const r = await fetch('`${API_BASE}/api/export/my-students?' + params.toString(), {
+    const r = await fetch(`${API_BASE}/api/export/my-students?` + params.toString(), {
       headers: { 'Authorization': 'Bearer ' + token }
     });
     if (!r.ok) throw new Error('Export failed');
