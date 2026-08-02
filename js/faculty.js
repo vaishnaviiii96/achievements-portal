@@ -25,6 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('av').textContent       = initials(name);
   const hav = document.getElementById('header-av');
   if (hav) hav.textContent = initials(name);
+  const ddName = document.getElementById('dd-name');
+  if (ddName) ddName.textContent = name;
+  const ddRoll = document.getElementById('dd-roll');
+  if (ddRoll) ddRoll.textContent = user.faculty_code || user.employee_id || '—';
   document.getElementById('welcome').textContent  = 'Welcome, ' + (name.split(' ')[0] || 'Faculty') + '!';
 
   loadAchievements();
@@ -436,6 +440,7 @@ alertEl.innerHTML = '';
       document.getElementById('photo-preview-bar').innerHTML = '';
       document.getElementById('duration-pill').style.display = 'none';
       await loadAchievements();
+      show('mine', document.getElementById('nav-mine'));
       setTimeout(() => alertEl.innerHTML = '', 4000);
     } else {
       alertEl.innerHTML = `<div class="alert alert-e">${d.message || d.error || 'Submission failed.'}</div>`;
@@ -828,6 +833,7 @@ async function saveDraft() {
       showToast('Draft Saved!', 'Find it in My Achievements → Drafts.');
 alertEl.innerHTML = '';
       await loadAchievements();
+      show('mine', document.getElementById('nav-mine'));
       setTimeout(() => alertEl.innerHTML = '', 5000);
     } else {
       alertEl.innerHTML = `<div class="alert alert-e">${d.error || 'Could not save draft.'}</div>`;
