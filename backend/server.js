@@ -10,7 +10,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: 'achievements-portal-bice.vercel.app'
+  origin: 'https://achievements-portal-bice.vercel.app'
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
