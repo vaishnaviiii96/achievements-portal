@@ -51,7 +51,7 @@ flowchart TD
 - Rate limiting on login (10/15min) and general API (150/15min)
 - OTP password reset — codes are bcrypt-hashed before storage, expire in 10 min, rate-limited separately
 - No default/shared passwords anywhere — bulk-imported accounts get unique random temp passwords
-- CORS locked to the deployed frontend origin, parameterised SQL everywhere
+- CORS restricted to Vercel-hosted origins only, parameterised SQL everywhere
 
 ## Tech stack
 
