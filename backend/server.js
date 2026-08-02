@@ -2,12 +2,17 @@ require('dns').setDefaultResultOrder('ipv4first');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 const { otpRequestLimiter, otpVerifyLimiter } = require('./middleware/otpLimiter');
 
 const { apiLimiter, loginLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
+
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
 app.set('trust proxy', 1);
 // Middleware
 app.use(cors({
